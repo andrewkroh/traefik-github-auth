@@ -1,0 +1,36 @@
+services:
+  traefik:
+    image: traefik:v3
+    command:
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=DEBUG"
+    ports:
+      - "8888:80"
+    volumes:
+      - "./traefik/:/etc/traefik/dynamic/"
+    depends_on:
+      - validator
+      - echo
+
+  validator:
+    build:
+      context: ..
+      dockerfile: integration/validator/Dockerfile
+    command: ["-org=test-org", "-listen=:8080"]
+    environment:
+      GITHUB_API_BASE_URL: "http://mock-github:9090"
+    depends_on:
+      - mock-github
+
+  mock-github:
+    build:
+      context: ./mock-github
+    expose:
+      - "9090"
+
+  echo:
+    build:
+      context: ./echo
+    expose:
+      - "8081"

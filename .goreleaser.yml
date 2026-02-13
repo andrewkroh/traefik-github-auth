@@ -1,0 +1,40 @@
+version: 2
+project_name: traefik-github-auth
+
+builds:
+  - id: traefik-github-auth
+    main: ./cmd/server
+    binary: traefik-github-auth
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats: [gz]
+    files:
+      - none*
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+
+changelog:
+  use: github-native
+
+dockers_v2:
+  - id: traefik-github-auth
+    dockerfile: Dockerfile
+    ids: [traefik-github-auth]
+    images:
+      - "ghcr.io/andrewkroh/traefik-github-auth"
+    tags: ["{{ .Tag }}", latest]
+    platforms: [linux/amd64, linux/arm64]
+    labels:
+      org.opencontainers.image.created: "{{ .Date }}"
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.source: "{{ .GitURL }}"
+      org.opencontainers.image.version: "{{ .Version }}"

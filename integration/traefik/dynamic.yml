@@ -1,0 +1,36 @@
+http:
+  middlewares:
+    github-auth-headers:
+      headers:
+        customRequestHeaders:
+          X-Auth-User-Login: ""
+          X-Auth-User-Id: ""
+          X-Auth-User-Email: ""
+          X-Auth-User-Org: ""
+          X-Auth-User-Teams: ""
+
+    github-auth:
+      forwardAuth:
+        address: "http://validator:8080/validate"
+        authResponseHeaders:
+          - "X-Auth-User-Login"
+          - "X-Auth-User-Id"
+          - "X-Auth-User-Email"
+          - "X-Auth-User-Org"
+          - "X-Auth-User-Teams"
+
+  routers:
+    echo:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - web
+      middlewares:
+        - github-auth-headers
+        - github-auth
+      service: echo-service
+
+  services:
+    echo-service:
+      loadBalancer:
+        servers:
+          - url: "http://echo:8081"

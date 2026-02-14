@@ -8,29 +8,36 @@ package otelsetup
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
+	"time"
 
+	"go.opentelemetry.io/contrib/exporters/autoexport"
+	"go.opentelemetry.io/contrib/instrumentation/host"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
-	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.39.0"
 )
 
-// Setup initializes OpenTelemetry with OTLP exporters for traces and metrics.
-// Configuration is driven by standard OTEL_* environment variables.
-// It returns a shutdown function that should be deferred by the caller.
+// Setup initializes OpenTelemetry with trace and metric providers.
+//
+// Traces are only enabled when OTEL_TRACES_EXPORTER is explicitly set
+// to a value other than "none". Metrics are only enabled when
+// OTEL_METRICS_EXPORTER is explicitly set to a value other than "none".
+// The autoexport package handles exporter selection based on standard
+// OTel environment variables (e.g., OTEL_EXPORTER_OTLP_PROTOCOL for
+// gRPC vs HTTP).
+//
+// Returns a shutdown function that should be deferred by the caller.
 func Setup(ctx context.Context, serviceName, serviceVersion string) (shutdown func(context.Context) error, err error) {
 	var shutdownFuncs []func(context.Context) error
 
-	// Build the shutdown function that calls all registered shutdown functions.
 	shutdown = func(ctx context.Context) error {
 		var errs []error
 		for _, fn := range shutdownFuncs {
@@ -41,15 +48,19 @@ func Setup(ctx context.Context, serviceName, serviceVersion string) (shutdown fu
 		return errors.Join(errs...)
 	}
 
-	// Create the resource with service name and version.
-	res, err := resource.New(ctx,
-		resource.WithAttributes(
+	// Build resource with service info. Standard OTel env vars
+	// (OTEL_SERVICE_NAME, OTEL_RESOURCE_ATTRIBUTES) are picked up
+	// automatically by resource.Default().
+	res, err := resource.Merge(
+		resource.NewWithAttributes(
+			semconv.SchemaURL,
 			semconv.ServiceName(serviceName),
 			semconv.ServiceVersion(serviceVersion),
 		),
+		resource.Default(),
 	)
 	if err != nil {
-		return shutdown, err
+		return shutdown, fmt.Errorf("failed to create resource: %w", err)
 	}
 
 	// Set up the propagator (W3C TraceContext + Baggage).
@@ -58,66 +69,48 @@ func Setup(ctx context.Context, serviceName, serviceVersion string) (shutdown fu
 		propagation.Baggage{},
 	))
 
-	// Set up the trace exporter and provider.
-	// Check OTEL_TRACES_EXPORTER env var (supports "console", "otlp", "none").
+	// Traces: Quiet opt-in. Only initialize if the user explicitly set an exporter.
+	// This prevents OTel from defaulting to 'otlp' and logging connection errors.
 	tracesExporter := os.Getenv("OTEL_TRACES_EXPORTER")
-	if tracesExporter == "" {
-		tracesExporter = "otlp" // Default to OTLP
-	}
-
-	if tracesExporter != "none" {
-		var traceExporter sdktrace.SpanExporter
-
-		switch tracesExporter {
-		case "console":
-			traceExporter, err = stdouttrace.New()
-		case "otlp":
-			traceExporter, err = otlptracehttp.New(ctx)
-		default:
-			return shutdown, errors.New("unsupported OTEL_TRACES_EXPORTER value: " + tracesExporter)
-		}
-
+	if tracesExporter != "" && tracesExporter != "none" {
+		spanExporter, err := autoexport.NewSpanExporter(ctx)
 		if err != nil {
-			return shutdown, err
+			return shutdown, fmt.Errorf("failed to create span exporter: %w", err)
 		}
 
 		tracerProvider := sdktrace.NewTracerProvider(
-			sdktrace.WithBatcher(traceExporter),
+			sdktrace.WithBatcher(spanExporter),
 			sdktrace.WithResource(res),
 		)
 		shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
 		otel.SetTracerProvider(tracerProvider)
 	}
 
-	// Set up the metric exporter and provider.
-	// Check OTEL_METRICS_EXPORTER env var (supports "console", "otlp", "none").
+	// Metrics: Quiet opt-in. Only initialize if the user explicitly set an exporter.
+	// This prevents OTel from defaulting to 'otlp' and logging connection errors.
 	metricsExporter := os.Getenv("OTEL_METRICS_EXPORTER")
-	if metricsExporter == "" {
-		metricsExporter = "otlp" // Default to OTLP
-	}
-
-	if metricsExporter != "none" {
-		var metricExporter metric.Exporter
-
-		switch metricsExporter {
-		case "console":
-			metricExporter, err = stdoutmetric.New()
-		case "otlp":
-			metricExporter, err = otlpmetrichttp.New(ctx)
-		default:
-			return shutdown, errors.New("unsupported OTEL_METRICS_EXPORTER value: " + metricsExporter)
-		}
-
+	if metricsExporter != "" && metricsExporter != "none" {
+		reader, err := autoexport.NewMetricReader(ctx)
 		if err != nil {
-			return shutdown, err
+			return shutdown, fmt.Errorf("failed to create metric reader: %w", err)
 		}
 
 		meterProvider := metric.NewMeterProvider(
-			metric.WithReader(metric.NewPeriodicReader(metricExporter)),
 			metric.WithResource(res),
+			metric.WithReader(reader),
 		)
 		shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
 		otel.SetMeterProvider(meterProvider)
+
+		// Start Go runtime metrics collection.
+		if err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(15 * time.Second)); err != nil {
+			return shutdown, fmt.Errorf("failed to start runtime metrics: %w", err)
+		}
+
+		// Start host/process metrics collection.
+		if err := host.Start(); err != nil {
+			return shutdown, fmt.Errorf("failed to start host metrics: %w", err)
+		}
 	}
 
 	return shutdown, nil

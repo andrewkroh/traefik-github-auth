@@ -44,9 +44,6 @@ type ValidationResult struct {
 	// ID is the GitHub user ID.
 	ID int64
 
-	// Email is the GitHub user's email address.
-	Email string
-
 	// Org is the GitHub organization that was validated.
 	Org string
 
@@ -276,7 +273,6 @@ func (v *Validator) Validate(ctx context.Context, token string) (*ValidationResu
 	result := ValidationResult{
 		Login: user.Login,
 		ID:    user.ID,
-		Email: user.Email,
 		Org:   v.org,
 		Teams: teamSlugs,
 	}

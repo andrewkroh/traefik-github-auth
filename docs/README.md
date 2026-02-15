@@ -23,7 +23,6 @@ a Bearer token.
 - Forwards user identity to upstream services via response headers:
   - `X-Auth-User-Login` — GitHub username
   - `X-Auth-User-Id` — GitHub user ID
-  - `X-Auth-User-Email` — GitHub user email
   - `X-Auth-User-Org` — GitHub organization
   - `X-Auth-User-Teams` — Comma-separated team slugs within the org
 - Caches validation results (default 5 minutes) to minimize GitHub API calls.
@@ -96,7 +95,6 @@ http:
         customRequestHeaders:
           X-Auth-User-Login: ""
           X-Auth-User-Id: ""
-          X-Auth-User-Email: ""
           X-Auth-User-Org: ""
           X-Auth-User-Teams: ""
 
@@ -106,7 +104,6 @@ http:
         authResponseHeaders:
           - "X-Auth-User-Login"
           - "X-Auth-User-Id"
-          - "X-Auth-User-Email"
           - "X-Auth-User-Org"
           - "X-Auth-User-Teams"
 
@@ -127,10 +124,16 @@ http:
 
 ### GitHub PAT requirements
 
-Users authenticating against this service need a **fine-grained PAT** with:
+Users authenticating against this service need a **fine-grained PAT** with the
+**Resource owner** set to your organization and the following permissions:
 
-- **Resource owner** set to your organization.
-- **Organization permissions**: Members — Read-only.
+| Permission              | Required for |
+|-------------------------|--------------|
+| **Members** (Read-only) | Org membership check and `X-Auth-User-Teams` header |
+
+> **Note:** The Members permission is only required for the `X-Auth-User-Teams`
+> header. Without it, authentication and org membership checks still work, but
+> the teams list will be empty.
 
 The token is sent as a Bearer token in the `Authorization` header:
 

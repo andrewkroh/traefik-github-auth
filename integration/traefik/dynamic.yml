@@ -5,7 +5,6 @@ http:
         customRequestHeaders:
           X-Auth-User-Login: ""
           X-Auth-User-Id: ""
-          X-Auth-User-Email: ""
           X-Auth-User-Org: ""
           X-Auth-User-Teams: ""
 
@@ -15,7 +14,6 @@ http:
         authResponseHeaders:
           - "X-Auth-User-Login"
           - "X-Auth-User-Id"
-          - "X-Auth-User-Email"
           - "X-Auth-User-Org"
           - "X-Auth-User-Teams"
 

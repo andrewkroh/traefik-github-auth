@@ -49,7 +49,6 @@ func TestCache_SetAndGet(t *testing.T) {
 	expected := validator.ValidationResult{
 		Login: "testuser",
 		ID:    12345,
-		Email: "test@example.com",
 		Org:   "test-org",
 		Teams: []string{"team-a", "team-b"},
 	}
@@ -68,9 +67,6 @@ func TestCache_SetAndGet(t *testing.T) {
 	}
 	if result.ID != expected.ID {
 		t.Fatalf("ID: got %d, want %d", result.ID, expected.ID)
-	}
-	if result.Email != expected.Email {
-		t.Fatalf("Email: got %q, want %q", result.Email, expected.Email)
 	}
 	if len(result.Teams) != len(expected.Teams) {
 		t.Fatalf("Teams length: got %d, want %d", len(result.Teams), len(expected.Teams))

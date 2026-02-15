@@ -21,7 +21,7 @@ const testToken = "test-token-for-unit-tests"
 var _ Client = (*HTTPClient)(nil)
 
 func TestHTTPClient_GetUser_Success(t *testing.T) {
-	user := User{Login: "octocat", ID: 1, Email: "octocat@github.com"}
+	user := User{Login: "octocat", ID: 1}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/user" {
@@ -46,13 +46,10 @@ func TestHTTPClient_GetUser_Success(t *testing.T) {
 	if got.ID != user.ID {
 		t.Errorf("ID: got %d, want %d", got.ID, user.ID)
 	}
-	if got.Email != user.Email {
-		t.Errorf("Email: got %q, want %q", got.Email, user.Email)
-	}
 }
 
 func TestHTTPClient_GetUser_ClassicPAT(t *testing.T) {
-	user := User{Login: "octocat", ID: 1, Email: "octocat@github.com"}
+	user := User{Login: "octocat", ID: 1}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

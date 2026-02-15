@@ -133,7 +133,6 @@ func TestValidToken(t *testing.T) {
 
 	assertHeader(t, echo.Headers, "X-Auth-User-Login", "testuser1")
 	assertHeader(t, echo.Headers, "X-Auth-User-Id", "1001")
-	assertHeader(t, echo.Headers, "X-Auth-User-Email", "test1@example.com")
 	assertHeader(t, echo.Headers, "X-Auth-User-Org", "test-org")
 	assertHeader(t, echo.Headers, "X-Auth-User-Teams", "platform-eng,backend")
 }

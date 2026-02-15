@@ -127,7 +127,6 @@ func (h *Handler) handleValidate(w http.ResponseWriter, r *http.Request) {
 	// Success: set response headers with user info.
 	w.Header().Set("X-Auth-User-Login", result.Login)
 	w.Header().Set("X-Auth-User-Id", fmt.Sprintf("%d", result.ID))
-	w.Header().Set("X-Auth-User-Email", result.Email)
 	w.Header().Set("X-Auth-User-Org", result.Org)
 	w.Header().Set("X-Auth-User-Teams", strings.Join(result.Teams, ","))
 

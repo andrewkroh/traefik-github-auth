@@ -9,7 +9,6 @@ package github
 type User struct {
 	Login string `json:"login"`
 	ID    int64  `json:"id"`
-	Email string `json:"email"`
 }
 
 // Team represents a GitHub team.

@@ -19,7 +19,6 @@ import (
 type userFixture struct {
 	Login       string
 	ID          int64
-	Email       string
 	IsOrgMember bool
 	Teams       []string
 	IsClassic   bool
@@ -30,7 +29,6 @@ var fixtures = map[string]userFixture{
 	"valid-test-token-1": {
 		Login:       "testuser1",
 		ID:          1001,
-		Email:       "test1@example.com",
 		IsOrgMember: true,
 		Teams:       []string{"platform-eng", "backend"},
 		IsClassic:   false,
@@ -38,7 +36,6 @@ var fixtures = map[string]userFixture{
 	"valid-test-token-2": {
 		Login:       "testuser2",
 		ID:          1002,
-		Email:       "test2@example.com",
 		IsOrgMember: true,
 		Teams:       []string{"frontend"},
 		IsClassic:   false,
@@ -46,7 +43,6 @@ var fixtures = map[string]userFixture{
 	"non-member-token": {
 		Login:       "outsider",
 		ID:          2001,
-		Email:       "outsider@example.com",
 		IsOrgMember: false,
 		Teams:       nil,
 		IsClassic:   false,
@@ -54,7 +50,6 @@ var fixtures = map[string]userFixture{
 	"classic-pat-token": {
 		Login:       "classicuser",
 		ID:          3001,
-		Email:       "classic@example.com",
 		IsOrgMember: true,
 		Teams:       []string{"platform-eng"},
 		IsClassic:   true,
@@ -113,7 +108,6 @@ func handleGetUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]any{
 		"login": fixture.Login,
 		"id":    fixture.ID,
-		"email": fixture.Email,
 	})
 }
 

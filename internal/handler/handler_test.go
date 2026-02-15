@@ -136,7 +136,6 @@ func TestValidate_Success(t *testing.T) {
 			return &validator.ValidationResult{
 				Login: "octocat",
 				ID:    12345,
-				Email: "octocat@github.com",
 				Org:   "test-org",
 				Teams: []string{"team-a", "team-b"},
 			}, nil
@@ -159,10 +158,6 @@ func TestValidate_Success(t *testing.T) {
 
 	if got := rec.Header().Get("X-Auth-User-Id"); got != "12345" {
 		t.Fatalf("expected X-Auth-User-Id %q, got %q", "12345", got)
-	}
-
-	if got := rec.Header().Get("X-Auth-User-Email"); got != "octocat@github.com" {
-		t.Fatalf("expected X-Auth-User-Email %q, got %q", "octocat@github.com", got)
 	}
 
 	if got := rec.Header().Get("X-Auth-User-Org"); got != "test-org" {
@@ -344,7 +339,6 @@ func TestValidate_EmptyTeams(t *testing.T) {
 			return &validator.ValidationResult{
 				Login: "octocat",
 				ID:    12345,
-				Email: "octocat@github.com",
 				Org:   "test-org",
 				Teams: []string{},
 			}, nil
@@ -372,7 +366,6 @@ func TestValidate_MultipleTeams(t *testing.T) {
 			return &validator.ValidationResult{
 				Login: "octocat",
 				ID:    12345,
-				Email: "octocat@github.com",
 				Org:   "test-org",
 				Teams: []string{"engineering", "security", "platform"},
 			}, nil

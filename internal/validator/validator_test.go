@@ -84,7 +84,6 @@ func TestValidate_CacheHit(t *testing.T) {
 		result: ValidationResult{
 			Login: "cacheduser",
 			ID:    100,
-			Email: "cached@example.com",
 			Org:   "test-org",
 			Teams: []string{"team-alpha"},
 		},
@@ -111,9 +110,6 @@ func TestValidate_CacheHit(t *testing.T) {
 	}
 	if result.ID != 100 {
 		t.Errorf("expected ID 100, got %d", result.ID)
-	}
-	if result.Email != "cached@example.com" {
-		t.Errorf("expected email 'cached@example.com', got %q", result.Email)
 	}
 	if len(result.Teams) != 1 || result.Teams[0] != "team-alpha" {
 		t.Errorf("expected teams [team-alpha], got %v", result.Teams)
@@ -152,7 +148,7 @@ func TestValidate_CacheMiss_Success(t *testing.T) {
 
 	ghClient := &mockGitHubClient{
 		getUser: func(ctx context.Context, token string) (*github.User, bool, error) {
-			return &github.User{Login: "testuser", ID: 42, Email: "test@example.com"}, false, nil
+			return &github.User{Login: "testuser", ID: 42}, false, nil
 		},
 		checkOrgMembership: func(ctx context.Context, token, org, username string) error {
 			if org != "myorg" {
@@ -181,9 +177,6 @@ func TestValidate_CacheMiss_Success(t *testing.T) {
 	}
 	if result.ID != 42 {
 		t.Errorf("expected ID 42, got %d", result.ID)
-	}
-	if result.Email != "test@example.com" {
-		t.Errorf("expected email 'test@example.com', got %q", result.Email)
 	}
 	if len(result.Teams) != 2 {
 		t.Fatalf("expected 2 teams, got %d", len(result.Teams))
@@ -282,7 +275,7 @@ func TestValidate_ClassicPAT_Allowed(t *testing.T) {
 
 	ghClient := &mockGitHubClient{
 		getUser: func(ctx context.Context, token string) (*github.User, bool, error) {
-			return &github.User{Login: "classicuser", ID: 55, Email: "classic@example.com"}, true, nil
+			return &github.User{Login: "classicuser", ID: 55}, true, nil
 		},
 		checkOrgMembership: func(ctx context.Context, token, org, username string) error {
 			return nil
@@ -392,7 +385,7 @@ func TestValidate_TeamsExtracted(t *testing.T) {
 
 	ghClient := &mockGitHubClient{
 		getUser: func(ctx context.Context, token string) (*github.User, bool, error) {
-			return &github.User{Login: "teamuser", ID: 77, Email: "teams@example.com"}, false, nil
+			return &github.User{Login: "teamuser", ID: 77}, false, nil
 		},
 		checkOrgMembership: func(ctx context.Context, token, org, username string) error {
 			return nil
@@ -427,8 +420,5 @@ func TestValidate_TeamsExtracted(t *testing.T) {
 	}
 	if result.ID != 77 {
 		t.Errorf("expected ID 77, got %d", result.ID)
-	}
-	if result.Email != "teams@example.com" {
-		t.Errorf("expected email 'teams@example.com', got %q", result.Email)
 	}
 }

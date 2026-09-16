@@ -79,8 +79,9 @@ func TestTraceHandler_NoSpanContext(t *testing.T) {
 	handler := NewTraceHandler(inner)
 
 	ctx := context.Background()
-	rec := slog.Record{}
-	rec.Message = "test message"
+	rec := slog.Record{
+		Message: "test message",
+	}
 
 	if err := handler.Handle(ctx, rec); err != nil {
 		t.Fatalf("Handle returned unexpected error: %v", err)
@@ -111,8 +112,9 @@ func TestTraceHandler_WithSpanContext(t *testing.T) {
 	inner := newCaptureHandler()
 	handler := NewTraceHandler(inner)
 
-	rec := slog.Record{}
-	rec.Message = "test with span"
+	rec := slog.Record{
+		Message: "test with span",
+	}
 
 	if err := handler.Handle(ctx, rec); err != nil {
 		t.Fatalf("Handle returned unexpected error: %v", err)
@@ -223,7 +225,7 @@ func TestNewLogger(t *testing.T) {
 	logger.InfoContext(ctx, "hello world")
 
 	// Parse the JSON output.
-	var entry map[string]interface{}
+	var entry map[string]any
 	if err := json.Unmarshal(buf.Bytes(), &entry); err != nil {
 		t.Fatalf("failed to parse JSON log output: %v\nraw output: %s", err, buf.String())
 	}

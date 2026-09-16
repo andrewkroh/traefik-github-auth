@@ -97,10 +97,7 @@ func New(ttl time.Duration, maxSize int) *Cache {
 // cleanupLoop periodically removes expired entries from the cache.
 // It runs every TTL/2 or every 30 seconds, whichever is smaller.
 func (c *Cache) cleanupLoop() {
-	interval := c.ttl / 2
-	if interval > 30*time.Second {
-		interval = 30 * time.Second
-	}
+	interval := min(c.ttl/2, 30*time.Second)
 	if interval <= 0 {
 		interval = time.Second
 	}

@@ -153,10 +153,10 @@ func TestCache_ConcurrentAccess(t *testing.T) {
 	wg.Add(goroutines * 3) // Set, Get, Delete goroutines
 
 	// Concurrent Set goroutines.
-	for i := 0; i < goroutines; i++ {
+	for i := range goroutines {
 		go func(id int) {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				token := "test-token-concurrent"
 				c.Set(token, validator.ValidationResult{
 					Login: "user",
@@ -167,20 +167,20 @@ func TestCache_ConcurrentAccess(t *testing.T) {
 	}
 
 	// Concurrent Get goroutines.
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				c.Get("test-token-concurrent")
 			}
 		}()
 	}
 
 	// Concurrent Delete goroutines.
-	for i := 0; i < goroutines; i++ {
+	for range goroutines {
 		go func() {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for range iterations {
 				c.Delete("test-token-concurrent")
 			}
 		}()
@@ -251,7 +251,7 @@ func TestCache_SameTokenSameKey(t *testing.T) {
 	c.Set("test-token-1", expected, nil)
 
 	// Multiple gets for the same token should return the same result.
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		result, _, ok := c.Get("test-token-1")
 		if !ok {
 			t.Fatalf("iteration %d: expected cache hit", i)
